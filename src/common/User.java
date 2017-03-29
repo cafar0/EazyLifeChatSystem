@@ -1,9 +1,11 @@
 package common;
 
+import java.io.Serializable;
+
 /**
  * Created by Antoniu on 29-Mar-17.
  */
-public class User {
+public class User implements Serializable{
     private String username;
     private String sessionId;
 

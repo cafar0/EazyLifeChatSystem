@@ -1,51 +1,45 @@
 package usersServer;
 
-import common.DatabaseEntry;
+import database.AccessAccDB;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 
 /**
  * Created by Antoniu on 29-Mar-17.
  */
 public class UsersServer extends UnicastRemoteObject implements UsersServerI{
-    private List<DatabaseEntry> db = new ArrayList<>();
+    AccessAccDB db = new AccessAccDB();
 
     public UsersServer() throws RemoteException{
         super();
     }
 
     public String signUp(String username, String password) throws RemoteException{
-        for (DatabaseEntry dbe : db) {
-            if (dbe.getUser().equals(username)) {
-                return null;
-            }
-        }
-        db.add(new DatabaseEntry(username, hashPassword(password)));
 
-        return "ok";
+        if(db.addAccount(username, hashPassword(password))) {
+            return "ok";
+        }
+
+        return null;
     }
 
-    public String logIn(String username, String password) throws RemoteException{
+    public String logIn(String username, String password) throws RemoteException {
 
-        for (DatabaseEntry dbe : db) {
-            if (dbe.getUser().equals(username))
-                if (hashPassword(password).equals(dbe.getPassword())) {
+        if (!db.authenticatePassword(username, password))
+            return null;
 
-                    byte[] sessionID = new byte[64];
-                    new Random().nextBytes(sessionID);
+        byte[] sessionID = new byte[64];
+        new Random().nextBytes(sessionID);
 
+        System.out.println("set session id: " + db.setSessionID(username, Arrays.toString(sessionID)));
 
-                    return Arrays.toString(sessionID);
-                }
-        }
-        return null;
+        return Arrays.toString(sessionID);
+
     }
 
 
