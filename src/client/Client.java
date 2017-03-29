@@ -16,7 +16,7 @@ public class Client {
             System.out.println(usi.logIn("ion","mda"));
             System.out.println("session id is: " + usi.logIn("andrei", "diana"));
         } catch (Exception e) {
-
+            e.printStackTrace();
         }
     }
 }
