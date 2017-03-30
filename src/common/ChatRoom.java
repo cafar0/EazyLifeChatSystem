@@ -12,8 +12,8 @@ public class ChatRoom implements Serializable{
     private String name;
 
     public ChatRoom(String name, String user) {
-        users.add(user);
         this.name = name;
+        addUser(user);
     }
 
     public String getName() {
@@ -22,5 +22,18 @@ public class ChatRoom implements Serializable{
 
     public void addUser(String user) {
         users.add(user);
+    }
+
+    public List<String> getUsers() {
+        return users;
+    }
+
+    public void removeUser(String name) {
+        for (String user : users) {
+            if(user.equals(name)) {
+                users.remove(user);
+                return;
+            }
+        }
     }
 }
