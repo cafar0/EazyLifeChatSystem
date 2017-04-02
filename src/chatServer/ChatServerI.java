@@ -18,7 +18,7 @@ public interface ChatServerI extends Remote{
 
     String createPrivateChat(String endUser, User user) throws RemoteException;
 
-    void sendMessage(Message message, String chatRoomName, User user) throws RemoteException;
+    String sendMessage(Message message, String chatRoomName, User user) throws RemoteException;
 
-    void sendPrivateMessage(Message message, String endUser, User user) throws RemoteException;
+    String sendPrivateMessage(Message message, String endUser, User user) throws RemoteException;
 }

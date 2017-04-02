@@ -43,6 +43,20 @@ public class AccessAccDB extends AccessDB {
         return success;
     }
 
+    public boolean accExists(String user) {
+        boolean success;
+        openDB();
+        Document account = collection.find(eq(username, user)).first();
+        if (account == null) {
+            success = false;
+        } else {
+            success = true;
+        }
+        closeDB();
+        return success;
+    }
+
+
     public boolean authenticatePassword(String user, String password) {
         boolean success;
         openDB();
