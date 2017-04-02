@@ -20,6 +20,9 @@ public class UsersServer extends UnicastRemoteObject implements UsersServerI{
     }
 
     public String signUp(String username, String password) throws RemoteException{
+        if (username.contains(" \"\\") || password.contains("\\\"") || username.length() < 6 || password.length() < 8 || username.length() > 24 || password.length() > 24) {
+            return null;
+        }
 
         if(db.addAccount(username, hashPassword(password))) {
             return "ok";

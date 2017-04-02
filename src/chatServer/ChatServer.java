@@ -1,10 +1,7 @@
 package chatServer;
 
 import client.ClientServiceI;
-import common.ChatRoom;
-import common.DatabaseTemp;
-import common.Message;
-import common.User;
+import common.*;
 import database.AccessAccDB;
 
 import java.net.MalformedURLException;
@@ -20,14 +17,38 @@ import java.util.List;
  */
 public class ChatServer extends UnicastRemoteObject implements ChatServerI{
     List<ChatRoom> chatRooms = new ArrayList<>();
+    List<PrivateChatRoom> privateChatRooms = new ArrayList<>();
     private AccessAccDB db = new AccessAccDB();
 
     public ChatServer() throws RemoteException{
         super();
     }
 
-    public String joinChat(String chat, User user) {
-        return "ok/nok";
+    public String joinChat(String chatRoom, User user) {
+        if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            ChatRoom searchedChatRoom = null;
+            for (ChatRoom cr : chatRooms) {
+                if (cr.getName().equals(chatRoom)) {
+                    searchedChatRoom = cr;
+                    break;
+                }
+            }
+
+            if (searchedChatRoom == null) {
+                return null;
+            }
+
+            for (String chatUser : searchedChatRoom.getUsers()) {
+                if (chatUser.equals(user.getUsername())) {
+                    return null;
+                }
+            }
+            System.out.println("User " + user.getUsername() + " added to the chatroom");
+            searchedChatRoom.addUser(user.getUsername());
+            return "ok";
+        }
+
+        return null;
     }
 
     public String createChatRoom(String chatRoom, User user) {
@@ -48,40 +69,65 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
     }
 
     public String createPrivateChat(String endUser, User user) {
-        return "ok/nok";
+        if (!db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            System.out.println("authentication failed");
+            return null;
+        }
+
+        if (!db.accExists(endUser)) {
+            System.out.println("acc already existent");
+            return null;
+        }
+
+        String possibleChatName1 = user.getUsername() + endUser, posssibleChatName2 = endUser + user.getUsername();
+        //name the chat after the names of the user for easing the search between chats
+        for (PrivateChatRoom pcr : privateChatRooms) {
+            if (pcr.getName().equals(possibleChatName1)
+                    || (pcr.getName().equals(posssibleChatName2))
+                    || user.getUsername().equals(endUser)) {
+                return null;
+            }
+        }
+        privateChatRooms.add(new PrivateChatRoom(user.getUsername(), endUser));
+        return "ok";
     }
 
 
-    public void sendMessage(Message message, String chatRoomName, User user) {
-        System.out.println(-2);
+    public String sendMessage(Message message, String chatRoomName, User user) {
         if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
-            System.out.println(-1);
             for (ChatRoom cr : chatRooms) {
-                System.out.println(0);
                 if (cr.getName().equals(chatRoomName)) {
-                    System.out.println(1);
                     List<String> users = cr.getUsers();
                     for (String roomUser : users) {
-                        System.out.println(2);
                         if (roomUser.equals(user.getUsername())){
-                            System.out.println(3 + users.size());
                             for (String roomParticipant : users) {
                                 System.out.println("am ajuns " + roomParticipant);
                                 sendMessageToUser(new Message(chatRoomName + "@" + user.getUsername(), message.getMessage()), roomParticipant);
                             }
-                            break;
+                            return "ok";
                         }
                     }
                 }
             }
         }
-
+        return null;
     }
 
 
-
-    public void sendPrivateMessage(Message message, String endUser, User user) {
-
+    //this will return if the message was sent
+    public String sendPrivateMessage(Message message, String endUser, User user) {
+        if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            for (PrivateChatRoom pcr : privateChatRooms) {
+                String possibleChatName1 = user.getUsername() + endUser, posssibleChatName2 = endUser + user.getUsername();
+                if (pcr.getName().equals(possibleChatName1) || pcr.getName().equals(posssibleChatName2)) {
+                    System.out.println("sending message to user and enduser " + user.getUsername() + " " + endUser);
+                    sendMessageToUser(new Message("private@" + user.getUsername(), message.getMessage()), endUser);
+                    sendMessageToUser(new Message("private@" + user.getUsername(), message.getMessage()), user.getUsername());
+                    return "ok";
+                }
+            }
+        }
+        return null;
     }
 
     private void sendMessageToUser(Message message, String user) {

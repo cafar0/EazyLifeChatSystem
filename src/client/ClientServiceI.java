@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  */
 public interface ClientServiceI extends Remote {
 
-    public void messageToClient(Message message) throws RemoteException;
+    void messageToClient(Message message) throws RemoteException;
 
 
 }

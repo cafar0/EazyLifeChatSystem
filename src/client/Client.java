@@ -62,8 +62,23 @@ public class Client {
 
     private boolean createChat(String chatRoom){
         try {
-            System.out.println("chat room " + chatServerI.createChatRoom(chatRoom, user));
-            return true;
+            String chatCreated = chatServerI.createChatRoom(chatRoom, user);
+            System.out.println("chat room " + chatCreated);
+            if (chatCreated != null)
+                return true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private boolean createPrivateChat(String endUser) {
+        try {
+            String chatCreated = chatServerI.createPrivateChat(endUser, user);
+            System.out.println("private chat: " + chatCreated);
+            if (chatCreated != null) {
+                return true;
+            }
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -71,29 +86,69 @@ public class Client {
     }
 
     private boolean joinChat(String chatRoom) {
+        try {
+            String joinedChatRoom = chatServerI.joinChat(chatRoom, user);
+            System.out.println("Joining chat room result: " + joinedChatRoom);
+            if (joinedChatRoom != null) {
+                return true;
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
     private void sendMessage(Message message, String chatRoom) {
         try {
-            chatServerI.sendMessage(message, chatRoom, user);
+            if (chatServerI.sendMessage(message, chatRoom, user) == null)
+                System.out.println("The message wasn't send");
         } catch (RemoteException e) {
             e.printStackTrace();
         }
     }
 
+    private void sendPrivateMessage(Message message, String endUser) {
+        try {
+            if (chatServerI.sendPrivateMessage(message, endUser, user) == null)
+                System.out.println("The message wasn't send");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
     public static void main(String args[]) {
         try {
+            //stiu ca arata urat dar aici urmeaza sa lucram!
             Client client = new Client();
-            String name = "Username", pass = "password", chatRoom = "Discutam", message = "de ce dureaza atata??";
-            client.signup(name, pass);
+            Client client2 = new Client();
+            String name = "MyUsername", pass = "password", chatRoom = "Discut", message = "de ce dureaza atata??";
+            String name2 = "Username2", pass2 = "password", chatRoom2 = "Discut", message2 = "Asta este 2";
+            System.out.println("SignUp result: " + client.signup(name, pass));
 
-            client.login(name, pass);
+            System.out.println("Login result: " + client.login(name, pass));
 
 
-            client.createChat(chatRoom);
+            System.out.println("Create chat room result: " + client.createChat(chatRoom));
 
             client.sendMessage(new Message(name, message), chatRoom);
+
+            System.out.println("SignUp2 result: " + client2.signup(name2, pass));
+
+            client.sendPrivateMessage(new Message(name, message), name2);
+
+            System.out.println("Login2 result: " + client2.login(name2, pass));
+
+            System.out.println("Joined chat2 result: " + client2.joinChat(chatRoom2));
+
+            client.sendMessage(new Message(name, message), chatRoom);
+            client2.sendMessage(new Message(name2, message2), chatRoom2);
+
+
+            System.out.println("Sending private messages");
+            client.createPrivateChat(name2);
+            client.sendPrivateMessage(new Message(name, message), name2);
 
         } catch (Exception e) {
             e.printStackTrace();
