@@ -16,6 +16,10 @@ public class Message implements Serializable{
         return from + ": " + message;
     }
 
+    public String getFrom() {
+        return from;
+    }
+
     public String getMessage() {
         return message;
     }

@@ -29,11 +29,14 @@ public class ChatRoom implements Serializable{
     }
 
     public void removeUser(String name) {
+        String removeUser = null;
         for (String user : users) {
             if(user.equals(name)) {
-                users.remove(user);
-                return;
+                removeUser = user;
+                break;
             }
         }
+        if (removeUser != null)
+            users.remove(removeUser);
     }
 }
