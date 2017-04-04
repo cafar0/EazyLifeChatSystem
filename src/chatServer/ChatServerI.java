@@ -5,6 +5,7 @@ import common.User;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.List;
 
 /**
  * Created by Antoniu on 29-Mar-17.
@@ -21,4 +22,10 @@ public interface ChatServerI extends Remote{
     String sendMessage(Message message, String chatRoomName, User user) throws RemoteException;
 
     String sendPrivateMessage(Message message, String endUser, User user) throws RemoteException;
+
+    void getHistory(User user) throws RemoteException;
+
+    List<String> getPublicChatList(User user) throws RemoteException;
+
+    void logout(User user) throws RemoteException;
 }

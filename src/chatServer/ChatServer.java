@@ -92,6 +92,22 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
         return "ok";
     }
 
+    public void logout(User user) {
+        if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            for (ChatRoom cr : chatRooms) {
+                cr.removeUser(user.getUsername());
+            }
+            int i = 0;
+            while (i < privateChatRooms.size()) {
+                PrivateChatRoom pcr = privateChatRooms.get(i++);
+                if (pcr.getEndUser().equals(user.getUsername()) || pcr.getUser().equals(user.getUsername())) {
+                    privateChatRooms.remove(i - 1);
+                }
+            }
+
+        }
+    }
+
 
     public String sendMessage(Message message, String chatRoomName, User user) {
         if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
@@ -113,6 +129,16 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
         return null;
     }
 
+    public List<String> getPublicChatList(User user) {
+        List<String> chatRoomNames = new ArrayList<>();
+        if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            for (ChatRoom cr : chatRooms) {
+                chatRoomNames.add(cr.getName());
+            }
+        }
+        return chatRoomNames;
+    }
+
 
     //this will return if the message was sent
     public String sendPrivateMessage(Message message, String endUser, User user) {
@@ -121,7 +147,9 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
                 String possibleChatName1 = user.getUsername() + endUser, posssibleChatName2 = endUser + user.getUsername();
                 if (pcr.getName().equals(possibleChatName1) || pcr.getName().equals(posssibleChatName2)) {
                     System.out.println("sending message to user and enduser " + user.getUsername() + " " + endUser);
-                    sendMessageToUser(new Message("private@" + user.getUsername(), message.getMessage()), endUser);
+                    if (!sendMessageToUser(new Message("private@" + user.getUsername(), message.getMessage()), endUser)) {
+                        pcr.addMessageToHistory(message);
+                    }
                     sendMessageToUser(new Message("private@" + user.getUsername(), message.getMessage()), user.getUsername());
                     return "ok";
                 }
@@ -130,11 +158,24 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
         return null;
     }
 
-    private void sendMessageToUser(Message message, String user) {
+    public void getHistory(User user) {
+        if (db.authenticateSession(user.getUsername(), user.getSessionId())) {
+            for (PrivateChatRoom pcr : privateChatRooms) {
+                if (pcr.getEndUser().equals(user.getUsername()) || pcr.getUser().equals(user.getUsername())) {
+                    for (Message m : pcr.getHistoryForUser(user.getUsername())) {
+                        sendMessageToUser(new Message("private@" + m.getFrom(), m.getMessage()), user.getUsername());
+                    }
+                }
+            }
+        }
+    }
+
+    private boolean sendMessageToUser(Message message, String user) {
         try {
             System.out.println("rmi://127.0.0.1/" + user);
             ClientServiceI csi= (ClientServiceI) Naming.lookup("rmi://127.0.0.1/" + user);
             csi.messageToClient(message);
+            return true;
         } catch (NotBoundException e) {
             e.printStackTrace();
         } catch (MalformedURLException e) {
@@ -142,6 +183,9 @@ public class ChatServer extends UnicastRemoteObject implements ChatServerI{
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+        return false;
     }
+
+
 
 }
